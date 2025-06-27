@@ -11,8 +11,11 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
+import matplotlib.dates as mdates
+sns.set(style="whitegrid")
 
-def plot_columns(df, columns_to_plot, single_plot=True):
+
+def plot_columns(df, columns_to_plot, single_plot=True, main_title = ''):
     """
     Функция для построения графиков временных рядов для указанных столбцов DataFrame.
 
@@ -30,11 +33,11 @@ def plot_columns(df, columns_to_plot, single_plot=True):
             sns.lineplot(x=df['date'], y=df[column], label=column)
 
         # Настройки графика
-        plt.title('Временные ряды для различных столбцов')
+        plt.title(main_title)
         plt.xlabel('Дата')
-        plt.ylabel('Значение')
+        plt.ylabel('%')
         plt.legend(title='Столбцы')
-        plt.xticks(rotation=45)
+        plt.xticks(ticks=plt.xticks()[0][::30], rotation=45)
     else:
         # Определим количество строк и столбцов для сетки графиков
         num_plots = len(columns_to_plot)
@@ -46,10 +49,10 @@ def plot_columns(df, columns_to_plot, single_plot=True):
         for i, column in enumerate(columns_to_plot):
             plt.subplot(nrows, ncols, i + 1)
             sns.lineplot(x=df['date'], y=df[column], label=column)
-            plt.title(f'График для {column}')
+            plt.title(f'Динамика {column}')
             plt.xlabel('Дата')
             plt.ylabel('Значение')
-            plt.xticks(rotation=45)
+            plt.xticks(ticks=plt.xticks()[0][::30], rotation=45)
 
         plt.tight_layout()
 
@@ -60,8 +63,12 @@ def describe(data, p_level="10%"):
     """Проверка на тренд"""
     print(data.name)
 
-    s_h0 = "{}: нельзя отвергнуть H0, ряд может содержать единичные корни и быть нестационарным (p-value {:0.3f})"
-    s_ha = "{}: H0 отвергается, ряд стационарен (p-value {:0.3f})"
+    # s_h0 = "{}: нельзя отвергнуть H0, ряд может содержать единичные корни и быть нестационарным (p-value {:0.3f})"
+    # s_ha = "{}: H0 отвергается, ряд стационарен (p-value {:0.3f})"
+
+    s_h0 = '{}: H0 win'
+    s_ha = '{}: H1 win'
+
     print("Расширенный тест Дики — Фуллера (ADF):")
 
     test_name = "Тест с константой"
@@ -108,12 +115,18 @@ def draw_graphs(data, title=""):
     # Исторические данные и процентные изменения
     fig, axs = plt.subplots(2, 1, figsize=(14, 8))
     plt.subplots_adjust(hspace=0.4)
-    axs[0].plot(data['date'], data.iloc[:, 1], color='blue', lw=2)
-    axs[0].set_title(f"Historical Data for {title}", fontsize=14)
-    axs[0].set_xlabel('Дата', fontsize=12)
-    axs[0].set_ylabel('Value', fontsize=12)
-    axs[0].grid(True, linestyle='--', linewidth=0.5)
-    axs[0].tick_params(axis='x', rotation=45)
+    # axs[0].plot(data['date'], data.iloc[:, 1], color='blue', lw=2)
+    # axs[0].set_title(f"Historical Data for {title}", fontsize=14)
+    # axs[0].set_xlabel('Дата', fontsize=12)
+    # axs[0].set_ylabel('Value', fontsize=12)
+    # axs[0].grid(True, linestyle='--', linewidth=0.5)
+    # axs[0].tick_params(axis='x', rotation=45)
+
+    step = 30
+    # # Для первого графика (исторические данные)
+    # xticks0 = axs[0].get_xticks()
+    # axs[0].set_xticks(xticks0[::step])
+    # axs[0].set_xticklabels(data['date'].iloc[::step], rotation=45)
     
     axs[1].plot(inc['date'], inc.iloc[:, 1], color='green', lw=2)
     axs[1].set_title(f"Percentage Changes for {title}", fontsize=14)
@@ -121,6 +134,12 @@ def draw_graphs(data, title=""):
     axs[1].set_ylabel('Percentage Change', fontsize=12)
     axs[1].grid(True, linestyle='--', linewidth=0.5)
     axs[1].tick_params(axis='x', rotation=45)
+
+    xticks1 = axs[1].get_xticks()
+    axs[1].set_xticks(xticks1[::step])
+    axs[1].set_xticklabels(inc['date'].iloc[::step], rotation=45)
+
+    
 
     # ACF, PACF, Histogram, Q-Q plot и P-P plot
     fig, axs = plt.subplots(3, 2, figsize=(14, 12))
@@ -167,9 +186,9 @@ def plot_decomposition(data, name, period=1):
     result = seasonal_decompose(data[name], model="additive", period=period)
     
     # Строим графики и настраиваем их внешний вид
-    ax1.plot(result.trend.index, result.trend, color='blue', linestyle='--', lw=2)
-    ax2.plot(result.seasonal.index, result.seasonal, color='green', linestyle='-', lw=2)
-    ax3.plot(result.resid.index, result.resid, color='red', linestyle='-', lw=2)
+    ax1.plot(result.trend.index, result.trend, color='#1f77b4', linestyle='--', lw=2)
+    ax2.plot(result.seasonal.index, result.seasonal, color='#fc8d62', linestyle='-', lw=2)
+    ax3.plot(result.resid.index, result.resid, color='#66c2a5', linestyle='-', lw=2)
     
     # Устанавливаем метки осей и заголовки
     ax1.set_ylabel("Тренд", fontsize=14)
@@ -189,6 +208,11 @@ def plot_decomposition(data, name, period=1):
         ax.grid(True, linestyle='--', linewidth=0.5)
         ax.set_facecolor("#f2f2f2")
         ax.tick_params(axis='x', rotation=45)
+    
+    step = 30
+    xticks = ax3.get_xticks()
+    ax3.set_xticks(xticks[::step])
+    ax3.set_xticklabels(result.trend.index[::step], rotation=45)
 
     plt.show()
 
@@ -196,8 +220,8 @@ def get_description(df, ticker):
     data = df[['date', ticker]].dropna()
     draw_graphs(data, title=ticker)
     describe(df[ticker])
-    plot_decomposition(data, ticker, 365 // 4)
-    plot_decomposition(data, ticker, 365 // 2)
+    plot_decomposition(data, ticker, 21)
+    plot_decomposition(data, ticker, 252)
 
 
 def plot_corr_matrix(df_risk2):
